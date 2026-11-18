@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Aurora</title>
+<style>body{margin:0;background:#f5f7fb;color:#182d53;font:16px Arial;display:grid;place-content:center;min-height:100vh;padding:24px;box-sizing:border-box}form{max-width:340px;display:grid;gap:10px}input,button{padding:10px;font-size:16px}button{background:#182d53;color:#fff;border:0;border-radius:6px}#m{font-size:13px;min-height:1.2em;margin:0}</style></head>
+<body><form id="f" method="post" action="#" hidden><h2 style="margin:0">Aurora Plans</h2><input id="e" name="email" type="email" autocomplete="username" placeholder="E-mail" required><input id="p" name="password" type="password" autocomplete="current-password" placeholder="Mot de passe" required><button type="submit">Se connecter</button><p id="m"></p></form><p id="w">Chargement…</p>
+<script>
+(()=>{const SB='https://pizfosqeoaowvkmwiyce.supabase.co',K='sb_publishable_dO8kWd_IrHqXPwMHBknAqg_BOMUwG05',S='aurora-sb-session',V='79df5c73db';
+const $=i=>document.getElementById(i),msg=t=>$('m').textContent=t;
+let s=null;try{s=JSON.parse(localStorage.getItem(S)||'null')}catch(e){}
+const save=j=>{s={access_token:j.access_token,refresh_token:j.refresh_token,expires_at:j.expires_at||Math.floor(Date.now()/1000)+(j.expires_in||3600),user:{id:j.user?.id,email:j.user?.email}};localStorage.setItem(S,JSON.stringify(s))};
+const auth=async(p,b)=>{const r=await fetch(SB+'/auth/v1/'+p,{method:'POST',headers:{apikey:K,'content-type':'application/json'},body:JSON.stringify(b)});const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(j.msg||j.error_description||j.message||('Erreur '+r.status));e.status=r.status;throw e}return j};
+const showLogin=t=>{$('w').hidden=true;$('f').hidden=false;msg(t||'')};
+async function boot(){
+ if(!s)return showLogin();
+ try{if(s.expires_at-60<Date.now()/1000)save(await auth('token?grant_type=refresh_token',{refresh_token:s.refresh_token}))}catch(e){if(e.status===400||e.status===401){localStorage.removeItem(S);s=null;return showLogin('Session expirée, reconnecte-toi.')}return showLogin('Pas de connexion internet.')}
+ $('w').textContent='Ouverture…';
+ try{
+  const r=await fetch(SB+'/rest/v1/app_secret?select=k',{headers:{apikey:K,authorization:'Bearer '+s.access_token},cache:'no-store'});
+  const k=r.ok?(await r.json())[0]?.k:null;if(!k){localStorage.removeItem(S);s=null;return showLogin('Accès refusé.')}
+  const key=await crypto.subtle.importKey('raw',new Uint8Array(k.match(/../g).map(h=>parseInt(h,16))),'AES-GCM',false,['decrypt']);
+  const bin=new Uint8Array(await (await fetch('app.bin?v='+V,{cache:'no-cache'})).arrayBuffer());
+  const gz=await crypto.subtle.decrypt({name:'AES-GCM',iv:bin.slice(0,12)},key,bin.slice(12));
+  const html=await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  document.open();document.write(html);document.close();
+ }catch(e){showLogin('Ouverture impossible : '+e.message)}
+}
+$('f').onsubmit=async ev=>{ev.preventDefault();msg('…');try{save(await auth('token?grant_type=password',{email:$('e').value.trim(),password:$('p').value}));$('f').hidden=true;$('w').hidden=false;boot()}catch(e){msg(e.message==='Invalid login credentials'?'Identifiants incorrects.':e.message)}};
+boot();})();
+</script></body></html>
