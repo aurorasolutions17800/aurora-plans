@@ -9,6 +9,9 @@ let s=null;try{s=JSON.parse(localStorage.getItem(S)||'null')}catch(e){}
 const save=j=>{s={access_token:j.access_token,refresh_token:j.refresh_token,expires_at:j.expires_at||Math.floor(Date.now()/1000)+(j.expires_in||3600),user:{id:j.user?.id,email:j.user?.email}};localStorage.setItem(S,JSON.stringify(s))};
 const auth=async(p,b)=>{const r=await fetch(SB+'/auth/v1/'+p,{method:'POST',headers:{apikey:K,'content-type':'application/json'},body:JSON.stringify(b)});const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(j.msg||j.error_description||j.message||('Erreur '+r.status));e.status=r.status;throw e}return j};
 const showLogin=t=>{$('w').hidden=true;$('f').hidden=false;msg(t||'')};
+const CN='aurora-app-cache',cdb=()=>new Promise((ok,no)=>{const q=indexedDB.open(CN,1);q.onupgradeneeded=()=>q.result.createObjectStore('f');q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)});
+const cget=async()=>{try{const db=await cdb();return await new Promise(ok=>{const g=db.transaction('f').objectStore('f').get('app');g.onsuccess=()=>ok(g.result||null);g.onerror=()=>ok(null)})}catch(e){return null}};
+const cput=async v=>{try{const db=await cdb();db.transaction('f','readwrite').objectStore('f').put(v,'app')}catch(e){}};
 async function boot(){
  if(!s)return showLogin();
  try{if(s.expires_at-60<Date.now()/1000)save(await auth('token?grant_type=refresh_token',{refresh_token:s.refresh_token}))}catch(e){if(e.status===400||e.status===401){localStorage.removeItem(S);s=null;return showLogin('Session expirée, reconnecte-toi.')}return showLogin('Pas de connexion internet.')}
@@ -17,8 +20,10 @@ async function boot(){
   const r=await fetch(SB+'/rest/v1/app_secret?select=k',{headers:{apikey:K,authorization:'Bearer '+s.access_token},cache:'no-store'});
   const k=r.ok?(await r.json())[0]?.k:null;if(!k){localStorage.removeItem(S);s=null;return showLogin('Accès refusé.')}
   const key=await crypto.subtle.importKey('raw',new Uint8Array(k.match(/../g).map(h=>parseInt(h,16))),'AES-GCM',false,['decrypt']);
-  const bin=new Uint8Array(await (await fetch('app.bin?v='+V,{cache:'no-cache'})).arrayBuffer());
-  const gz=await crypto.subtle.decrypt({name:'AES-GCM',iv:bin.slice(0,12)},key,bin.slice(12));
+  const dec=b=>crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(0,12)},key,b.slice(12));
+  let c=await cget(),gz=null;
+  if(c&&c.v===V){try{gz=await dec(new Uint8Array(c.buf))}catch(e){gz=null}}
+  if(!gz){$('w').textContent='Mise à jour de l’app…';const buf=await (await fetch('app.bin?v='+V,{cache:'no-cache'})).arrayBuffer();gz=await dec(new Uint8Array(buf));cput({v:V,buf})}
   const html=await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
   document.open();document.write(html);document.close();
  }catch(e){showLogin('Ouverture impossible : '+e.message)}
