@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Aurora</title>
 <style>body{margin:0;background:#f5f7fb;color:#182d53;font:16px Arial;display:grid;place-content:center;min-height:100vh;padding:24px;box-sizing:border-box}form{max-width:340px;display:grid;gap:10px}input,button{padding:10px;font-size:16px}button{background:#182d53;color:#fff;border:0;border-radius:6px}#m{font-size:13px;min-height:1.2em;margin:0}</style></head>
-<body><form id="f" method="post" action="#" hidden><h2 style="margin:0">Aurora Plans</h2><input id="e" name="email" type="email" autocomplete="username" placeholder="E-mail" required><input id="p" name="password" type="password" autocomplete="current-password" placeholder="Mot de passe" required><button type="submit">Se connecter</button><p id="m"></p></form><p id="w">Chargement…</p>
+<body><form id="f" method="post" action="#" hidden><h2 style="margin:0">Aurora Plans</h2><input id="e" name="email" type="email" autocomplete="username" placeholder="E-mail" required><input id="p" name="password" type="password" autocomplete="current-password" placeholder="Mot de passe" required><button type="submit">Se connecter</button><button type="button" id="su" style="background:#fff;color:#182d53;border:1px solid #c9d3e3">Créer mon compte</button><p id="m"></p></form><p id="w">Chargement…</p>
 <script>
 (()=>{const SB='https://pizfosqeoaowvkmwiyce.supabase.co',K='sb_publishable_dO8kWd_IrHqXPwMHBknAqg_BOMUwG05',S='aurora-sb-session',V='c5d68199ac';
 const $=i=>document.getElementById(i),msg=t=>$('m').textContent=t;
@@ -28,6 +28,9 @@ async function boot(){
   document.open();document.write(html);document.close();
  }catch(e){showLogin('Ouverture impossible : '+e.message)}
 }
-$('f').onsubmit=async ev=>{ev.preventDefault();msg('…');try{save(await auth('token?grant_type=password',{email:$('e').value.trim(),password:$('p').value}));$('f').hidden=true;$('w').hidden=false;boot()}catch(e){msg(e.message==='Invalid login credentials'?'Identifiants incorrects.':e.message)}};
+$('su').onclick=async()=>{const email=$('e').value.trim(),password=$('p').value;if(!email||password.length<8){msg('Mets ton e-mail et un mot de passe de 8 caractères minimum.');return}msg('…');
+ try{const j=await auth('signup?redirect_to='+encodeURIComponent(location.origin+location.pathname),{email,password});if(j.access_token){save(j);$('f').hidden=true;$('w').hidden=false;boot();return}msg('Compte créé. Clique sur le lien reçu par e-mail (regarde aussi les spams), puis reviens te connecter ici.')}
+ catch(e){msg(/fermees|not allowed|Database error/i.test(e.message)?'Cette adresse n’est pas autorisée.':/already/i.test(e.message)?'Ce compte existe déjà : connecte-toi.':e.message)}};
+$('f').onsubmit=async ev=>{ev.preventDefault();msg('…');try{save(await auth('token?grant_type=password',{email:$('e').value.trim(),password:$('p').value}));$('f').hidden=true;$('w').hidden=false;boot()}catch(e){msg(e.message==='Invalid login credentials'?'Identifiants incorrects.':/not confirmed/i.test(e.message)?'Valide d’abord le lien reçu par e-mail.':e.message)}};
 boot();})();
 </script></body></html>
