@@ -6,7 +6,7 @@ main{max-width:640px;margin:0 auto;padding:20px 16px 40px}
 h1{font-size:22px;margin:4px 0 2px}p{margin:8px 0}.mut{color:#5d6b82;font-size:14px}
 .card{background:#fff;border:1px solid #dfe5ee;border-radius:12px;padding:16px;margin-top:14px}
 .row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #eef1f5}.row:last-child{border:0}
-iframe{width:100%;height:60vh;border:1px solid #dfe5ee;border-radius:8px;background:#fff}
+iframe{width:100%;height:60vh;}.pv{overflow:auto;max-height:70vh;border:1px solid #dfe5ee;border-radius:8px;background:#e9edf3;-webkit-overflow-scrolling:touch}#pz{width:100%}#pz img{display:block;width:100%;height:auto;margin:0 0 6px;background:#fff;box-shadow:0 1px 3px #0002}.zbar{display:flex;align-items:center;gap:10px;margin:4px 0 8px}.zbar .z{width:40px;height:40px;padding:0;border-radius:10px;background:#eef2f8;color:#182d53;font-size:22px}.zbar span{font-size:14px}#zl{white-space:nowrap;min-width:52px;text-align:center}.zz{border:1px solid #dfe5ee;border-radius:8px;background:#fff}
 a.btn,button{display:inline-block;border:0;border-radius:10px;padding:13px 18px;font-weight:600;font-size:16px;font-family:inherit;cursor:pointer;text-decoration:none}
 a.btn{background:#eef2f8;color:#182d53}button.p{background:#182d53;color:#fff;width:100%}button.p:disabled{opacity:.45}
 button.l{background:none;color:#5d6b82;padding:6px 0;font-size:14px}
@@ -32,13 +32,14 @@ fetch(FN+'?t='+encodeURIComponent(t)).then(r=>r.json()).then(j=>{
  document.getElementById('t').textContent='Devis n° '+j.num;
  if(j.status==='signed'){box.innerHTML='<div class="card ok"><p><b>Ce devis est déjà signé.</b></p><p class="mut">Signé par '+E(j.signer)+' le '+E(fdt(j.signed_at))+'.</p></div>';return}
  box.innerHTML=`<div class="card"><div class="row"><span>Client</span><b>${E(j.client)}</b></div><div class="row"><span>Objet</span><b>${E(j.objet)}</b></div><div class="row"><span>Montant TTC</span><b>${E(j.montant)}</b></div></div>
- <div class="card"><p><b>1. Lisez le devis et ses conditions générales</b></p><iframe src="${E(j.pdf)}" title="Devis"></iframe><p><a class="btn" href="${E(j.pdf)}" target="_blank" rel="noopener">Ouvrir le devis en PDF</a></p></div>
+ <div class="card"><p><b>1. Lisez le devis et ses conditions générales</b></p>${(j.pages&&j.pages.length)?`<div class="zbar"><button type="button" class="z" data-z="-">−</button><span id="zl">100 %</span><button type="button" class="z" data-z="+">+</button><span class="mut">Écartez deux doigts pour zoomer</span></div><div class="pv" id="pv"><div id="pz">${j.pages.map((u,i)=>`<img src="${E(u)}" alt="Page ${i+1}" loading="lazy">`).join('')}</div></div>`:`<iframe src="${E(j.pdf)}" title="Devis"></iframe>`}<p><a class="btn" href="${E(j.pdf)}" target="_blank" rel="noopener">Ouvrir le devis en PDF</a></p></div>
  <div class="card"><p><b>2. Signez</b></p>
  <label for="n">Vos nom et prénom</label><input type="text" id="n" autocomplete="name" maxlength="80">
  <label>Votre signature</label><canvas id="c"></canvas><button type="button" class="l" id="clr">Effacer la signature</button>
  <label class="ck"><input type="checkbox" id="a"> <span>Bon pour accord. J'accepte le devis n° ${E(j.num)} et ses conditions générales de vente, et je reconnais avoir été informé(e) de mon droit de rétractation de 14 jours.</span></label>
  <p id="err"></p><button type="button" class="p" id="s">Signer le devis</button>
  <p class="mut">Votre nom, la date, l'heure et l'adresse IP de votre connexion sont enregistrés comme preuve de signature.</p></div>`;
+ let zf=1;const pz=document.getElementById('pz');document.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{zf=Math.max(.5,Math.min(3,zf+(b.dataset.z==='+'?.25:-.25)));pz.style.width=(zf*100)+'%';document.getElementById('zl').textContent=Math.round(zf*100)+' %'});
  const c=document.getElementById('c'),x=c.getContext('2d');let drawn=false,down=false,last=null;
  const fit=()=>{const r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;x.scale(d,d);x.lineWidth=2.2;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#182d53';drawn=false};fit();
  const pt=e=>{const r=c.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
