@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Signature du devis · Aurora Solutions</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f2f4f7;color:#182d53;font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:4px 0 2px}p{margin:8px 0}.mut{color:#5d6b82;font-size:14px}
+.card{background:#fff;border:1px solid #dfe5ee;border-radius:12px;padding:16px;margin-top:14px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #eef1f5}.row:last-child{border:0}
+iframe{width:100%;height:60vh;border:1px solid #dfe5ee;border-radius:8px;background:#fff}
+a.btn,button{display:inline-block;border:0;border-radius:10px;padding:13px 18px;font-weight:600;font-size:16px;font-family:inherit;cursor:pointer;text-decoration:none}
+a.btn{background:#eef2f8;color:#182d53}button.p{background:#182d53;color:#fff;width:100%}button.p:disabled{opacity:.45}
+button.l{background:none;color:#5d6b82;padding:6px 0;font-size:14px}
+label{display:block;font-weight:600;margin:12px 0 6px}input[type=text]{width:100%;padding:12px;font-size:16px;border:1px solid #c9d3e3;border-radius:8px}
+canvas{width:100%;height:180px;border:1px dashed #9fb0c8;border-radius:8px;background:#fff;touch-action:none;display:block}
+.ck{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:15px}.ck input{width:22px;height:22px;flex:none;margin-top:1px}
+#err{color:#b3261e;font-weight:600;min-height:1.2em}.ok{background:#e8f6ec;border-color:#b9e2c4}
+</style></head>
+<body><main>
+<div class="mut">Aurora Solutions · Électricité</div>
+<h1 id="t">Signature du devis</h1>
+<div id="box"><p class="mut">Chargement…</p></div>
+</main>
+<script>
+(()=>{const FN='https://pizfosqeoaowvkmwiyce.supabase.co/functions/v1/sign';
+const t=(new URLSearchParams(location.hash.slice(1))).get('t')||'';
+const box=document.getElementById('box'),E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const fdt=s=>new Date(s).toLocaleString('fr-FR',{dateStyle:'long',timeStyle:'short'});
+const fail=m=>box.innerHTML='<div class="card"><p id="err">'+E(m)+'</p></div>';
+if(!/^[A-Za-z0-9_-]{40,64}$/.test(t))return fail('Lien invalide. Vérifiez le lien reçu par e-mail ou SMS.');
+fetch(FN+'?t='+encodeURIComponent(t)).then(r=>r.json()).then(j=>{
+ if(j.error)return fail(j.error);
+ document.getElementById('t').textContent='Devis n° '+j.num;
+ if(j.status==='signed'){box.innerHTML='<div class="card ok"><p><b>Ce devis est déjà signé.</b></p><p class="mut">Signé par '+E(j.signer)+' le '+E(fdt(j.signed_at))+'.</p></div>';return}
+ box.innerHTML=`<div class="card"><div class="row"><span>Client</span><b>${E(j.client)}</b></div><div class="row"><span>Objet</span><b>${E(j.objet)}</b></div><div class="row"><span>Montant TTC</span><b>${E(j.montant)}</b></div></div>
+ <div class="card"><p><b>1. Lisez le devis et ses conditions générales</b></p><iframe src="${E(j.pdf)}" title="Devis"></iframe><p><a class="btn" href="${E(j.pdf)}" target="_blank" rel="noopener">Ouvrir le devis en PDF</a></p></div>
+ <div class="card"><p><b>2. Signez</b></p>
+ <label for="n">Vos nom et prénom</label><input type="text" id="n" autocomplete="name" maxlength="80">
+ <label>Votre signature</label><canvas id="c"></canvas><button type="button" class="l" id="clr">Effacer la signature</button>
+ <label class="ck"><input type="checkbox" id="a"> <span>Bon pour accord. J'accepte le devis n° ${E(j.num)} et ses conditions générales de vente, et je reconnais avoir été informé(e) de mon droit de rétractation de 14 jours.</span></label>
+ <p id="err"></p><button type="button" class="p" id="s">Signer le devis</button>
+ <p class="mut">Votre nom, la date, l'heure et l'adresse IP de votre connexion sont enregistrés comme preuve de signature.</p></div>`;
+ const c=document.getElementById('c'),x=c.getContext('2d');let drawn=false,down=false,last=null;
+ const fit=()=>{const r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;x.scale(d,d);x.lineWidth=2.2;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#182d53';drawn=false};fit();
+ const pt=e=>{const r=c.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+ c.addEventListener('pointerdown',e=>{down=true;last=pt(e);c.setPointerCapture(e.pointerId)});
+ c.addEventListener('pointermove',e=>{if(!down)return;const p=pt(e);x.beginPath();x.moveTo(last.x,last.y);x.lineTo(p.x,p.y);x.stroke();last=p;drawn=true});
+ ['pointerup','pointercancel'].forEach(k=>c.addEventListener(k,()=>down=false));
+ document.getElementById('clr').onclick=()=>{x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,c.width,c.height);fit()};
+ const err=m=>document.getElementById('err').textContent=m;
+ document.getElementById('s').onclick=async ev=>{const b=ev.target,name=document.getElementById('n').value.trim();
+  if(name.length<3)return err('Indiquez vos nom et prénom.');if(!drawn)return err('Signez dans le cadre.');if(!document.getElementById('a').checked)return err('Cochez la case « Bon pour accord ».');
+  err('');b.disabled=true;b.textContent='Enregistrement…';
+  try{const r=await fetch(FN,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({t,name,accept:true,png:c.toDataURL('image/png')})});const k=await r.json();
+   if(!r.ok||!k.ok)throw new Error(k.error||'Erreur');
+   box.innerHTML='<div class="card ok"><p><b>Merci, votre devis est signé.</b></p><p class="mut">Signé par '+E(name)+' le '+E(fdt(k.signed_at))+'. Nous revenons vers vous très vite pour la suite.</p></div>';
+  }catch(e){b.disabled=false;b.textContent='Signer le devis';err(e.message)}};
+}).catch(()=>fail('Connexion impossible. Réessayez dans un instant.'));
+})();
+</script>
+</body></html>
