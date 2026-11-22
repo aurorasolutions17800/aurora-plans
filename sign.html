@@ -5,7 +5,7 @@
 main{max-width:640px;margin:0 auto;padding:20px 16px 40px}
 h1{font-size:22px;margin:4px 0 2px}p{margin:8px 0}.mut{color:#5d6b82;font-size:14px}
 .card{background:#fff;border:1px solid #dfe5ee;border-radius:12px;padding:16px;margin-top:14px}
-.row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #eef1f5}.row:last-child{border:0}
+.row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #eef1f5}.row:last-child{border:0}.row.strong b{font-size:17px}
 iframe{width:100%;height:60vh;}.pv{overflow:auto;height:70vh;touch-action:pan-x pan-y;overscroll-behavior:contain;border:1px solid #dfe5ee;border-radius:8px;background:#e9edf3;-webkit-overflow-scrolling:touch}#pz{width:100%}#pz img{display:block;width:100%;height:auto;margin:0 0 6px;background:#fff;box-shadow:0 1px 3px #0002}.zbar{display:flex;align-items:center;gap:10px;margin:4px 0 8px}.zbar .z{width:40px;height:40px;padding:0;border-radius:10px;background:#eef2f8;color:#182d53;font-size:22px}.zbar span{font-size:14px}#zl{white-space:nowrap;min-width:52px;text-align:center}.zz{border:1px solid #dfe5ee;border-radius:8px;background:#fff}
 a.btn,button{display:inline-block;border:0;border-radius:10px;padding:13px 18px;font-weight:600;font-size:16px;font-family:inherit;cursor:pointer;text-decoration:none}
 a.btn{background:#eef2f8;color:#182d53}button.p{background:#182d53;color:#fff;width:100%}button.p:disabled{opacity:.45}
@@ -31,7 +31,8 @@ fetch(FN+'?t='+encodeURIComponent(t)).then(r=>r.json()).then(j=>{
  if(j.error)return fail(j.error);
  document.getElementById('t').textContent='Devis n° '+j.num;
  if(j.status==='signed'){box.innerHTML='<div class="card ok"><p><b>Ce devis est déjà signé.</b></p><p class="mut">Signé par '+E(j.signer)+' le '+E(fdt(j.signed_at))+'.</p></div>';return}
- box.innerHTML=`<div class="card"><div class="row"><span>Client</span><b>${E(j.client)}</b></div><div class="row"><span>Objet</span><b>${E(j.objet)}</b></div><div class="row"><span>Montant TTC</span><b>${E(j.montant)}</b></div></div>
+ const R=j.recap||{},rw=(l,v,s)=>v?`<div class="row${s?' strong':''}"><span>${l}</span><b>${E(v)}</b></div>`:'';
+ box.innerHTML=`<div class="card"><p><b>Récapitulatif de ce que vous signez</b></p>${rw('Client',j.client)}${rw('Objet',j.objet)}${rw('Date du devis',R.date)}${rw('Montant HT',R.ht)}${rw('TVA',R.tva)}${rw('Total TTC',R.ttc||j.montant,1)}${R.acompte?rw('Acompte à la signature',R.acompte+' soit '+R.acompteTTC+' TTC',1)+rw('Reste à régler',R.reste+' TTC'):''}${rw('Paiement',R.paiement)}${rw('Début des travaux',R.debut)}${rw('Durée estimée',R.duree)}${rw('Offre valable jusqu’au',R.validite)}<p class="mut">Après signature, ${j.has_mail?'vous recevez le devis signé par e-mail':'le devis signé est transmis à Aurora Solutions'}. Vous disposez d’un droit de rétractation de 14 jours.</p></div>
  <div class="card"><p><b>1. Lisez le devis et ses conditions générales</b></p>${(j.pages&&j.pages.length)?`<div class="zbar"><button type="button" class="z" data-z="-">−</button><span id="zl">100 %</span><button type="button" class="z" data-z="+">+</button><span class="mut" id="zh">Deux doigts pour zoomer</span></div><div class="pv" id="pv"><div id="pz">${j.pages.map((u,i)=>`<img src="${E(u)}" alt="Page ${i+1}" loading="lazy">`).join('')}</div></div>`:`<iframe src="${E(j.pdf)}" title="Devis"></iframe>`}<p><a class="btn" href="${E(j.pdf)}" target="_blank" rel="noopener">Ouvrir le devis en PDF</a></p></div>
  <div class="card"><p><b>2. Signez</b></p>
  <label for="n">Vos nom et prénom</label><input type="text" id="n" autocomplete="name" maxlength="80">
@@ -65,7 +66,7 @@ fetch(FN+'?t='+encodeURIComponent(t)).then(r=>r.json()).then(j=>{
   err('');b.disabled=true;b.textContent='Enregistrement…';
   try{const r=await fetch(FN,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({t,name,accept:true,png:c.toDataURL('image/png')})});const k=await r.json();
    if(!r.ok||!k.ok)throw new Error(k.error||'Erreur');
-   box.innerHTML='<div class="card ok"><p><b>Merci, votre devis est signé.</b></p><p class="mut">Signé par '+E(name)+' le '+E(fdt(k.signed_at))+'. Nous revenons vers vous très vite pour la suite.</p></div>';
+   box.innerHTML='<div class="card ok"><p><b>Merci, votre devis est signé.</b></p><p class="mut">Signé par '+E(name)+' le '+E(fdt(k.signed_at))+'. '+(k.mailed?'Vous allez recevoir le devis signé par e-mail dans quelques minutes. ':'')+'Nous revenons vers vous très vite pour la suite.</p></div>';
   }catch(e){b.disabled=false;b.textContent='Signer le devis';err(e.message)}};
 }).catch(()=>fail('Connexion impossible. Réessayez dans un instant.'));
 })();
