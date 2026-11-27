@@ -3,7 +3,7 @@
 <style>body{margin:0;background:#f5f7fb;color:#182d53;font:16px Arial;display:grid;place-content:center;min-height:100vh;padding:24px;box-sizing:border-box}form{max-width:340px;display:grid;gap:10px}input,button{padding:10px;font-size:16px}button{background:#182d53;color:#fff;border:0;border-radius:6px}#m{font-size:13px;min-height:1.2em;margin:0}</style></head>
 <body><form id="f" method="post" action="#" hidden><h2 style="margin:0">Aurora Plans</h2><input id="e" name="email" type="email" autocomplete="username" placeholder="E-mail" required><input id="p" name="password" type="password" autocomplete="current-password" placeholder="Mot de passe" required><button type="submit">Se connecter</button><button type="button" id="su" style="background:#fff;color:#182d53;border:1px solid #c9d3e3">Créer mon compte</button><p id="m"></p></form><p id="w">Chargement…</p>
 <script>
-(()=>{const SB='https://pizfosqeoaowvkmwiyce.supabase.co',K='sb_publishable_dO8kWd_IrHqXPwMHBknAqg_BOMUwG05',S='aurora-sb-session',V='436a830723';
+(()=>{const SB='https://pizfosqeoaowvkmwiyce.supabase.co',K='sb_publishable_dO8kWd_IrHqXPwMHBknAqg_BOMUwG05',S='aurora-sb-session',V='d1603f4f15';
 const $=i=>document.getElementById(i),msg=t=>$('m').textContent=t;
 let s=null;try{s=JSON.parse(localStorage.getItem(S)||'null')}catch(e){}
 const save=j=>{s={access_token:j.access_token,refresh_token:j.refresh_token,expires_at:j.expires_at||Math.floor(Date.now()/1000)+(j.expires_in||3600),user:{id:j.user?.id,email:j.user?.email}};localStorage.setItem(S,JSON.stringify(s))};
