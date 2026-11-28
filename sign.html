@@ -13,7 +13,7 @@ button.l{background:none;color:#5d6b82;padding:6px 0;font-size:14px}
 label{display:block;font-weight:600;margin:12px 0 6px}input[type=text]{width:100%;padding:12px;font-size:16px;border:1px solid #c9d3e3;border-radius:8px}
 canvas{width:100%;height:180px;border:1px dashed #9fb0c8;border-radius:8px;background:#fff;touch-action:none;display:block}
 .ck{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:15px}.ck input{width:22px;height:22px;flex:none;margin-top:1px}
-#err{color:#b3261e;font-weight:600;min-height:1.2em}.ok{background:#e8f6ec;border-color:#b9e2c4}
+#err{color:#b3261e;font-weight:600;min-height:1.2em}.rd{color:#b3261e;font-weight:600;background:#fdecea;border:1px solid #f5c2bd;border-radius:8px;padding:10px 12px;margin:10px 0}.rd.okr{color:#1a7f37;background:#e8f6ec;border-color:#b9e2c4}.pvend{display:none;text-align:center;color:#b3261e;font-weight:600;font-size:14px;margin:6px 0 0}.ok{background:#e8f6ec;border-color:#b9e2c4}
 </style></head>
 <body><main>
 <div class="mut">Aurora Solutions · Électricité</div>
@@ -38,7 +38,7 @@ fetch(FN+'?t='+encodeURIComponent(t)).then(r=>r.json()).then(j=>{
  <label for="n">Vos nom et prénom</label><input type="text" id="n" autocomplete="name" maxlength="80">
  <label>Votre signature</label><canvas id="c"></canvas><button type="button" class="l" id="clr">Effacer la signature</button>
  <label class="ck"><input type="checkbox" id="a"> <span>Bon pour accord. J'accepte le devis n° ${E(j.num)} et ses conditions générales de vente, et je reconnais avoir été informé(e) de mon droit de rétractation de 14 jours.</span></label>
- <p id="err"></p><button type="button" class="p" id="s">Signer le devis</button>
+ <p id="rd" class="rd">Faites défiler le devis et ses conditions générales jusqu’en bas avant de pouvoir signer.</p><p id="err"></p><button type="button" class="p" id="s" disabled>Signer le devis</button>
  <p class="mut">Votre nom, la date, l'heure et l'adresse IP de votre connexion sont enregistrés comme preuve de signature.</p></div>`;
  if(matchMedia('(pointer:fine)').matches){const h=document.getElementById('zh');if(h)h.textContent='Ctrl + molette pour zoomer'}
  let zf=1;const pz=document.getElementById('pz'),pv=document.getElementById('pv'),zl=document.getElementById('zl');
@@ -53,6 +53,9 @@ fetch(FN+'?t='+encodeURIComponent(t)).then(r=>r.json()).then(j=>{
   ['gesturestart','gesturechange'].forEach(k=>pv.addEventListener(k,e=>e.preventDefault()));
   let lastTap=0;pv.addEventListener('click',e=>{const n=Date.now();if(n-lastTap<300){const r=pv.getBoundingClientRect();setZ(zf>1.2?1:2,e.clientX-r.left,e.clientY-r.top)}lastTap=n});
  }
+ let lu=!document.getElementById('pv');const sb=document.getElementById('s'),rd=document.getElementById('rd'),ak=document.getElementById('a');
+ const setLu=()=>{lu=true;sb.disabled=false;ak.disabled=false;rd.textContent='Devis et conditions générales lus jusqu’au bout. Vous pouvez signer.';rd.classList.add('okr')};
+ if(lu){rd.remove();sb.disabled=false}else{ak.disabled=true;const chk=()=>{if(!lu&&pv.scrollTop+pv.clientHeight>=pv.scrollHeight-24)setLu()};pv.addEventListener('scroll',chk,{passive:true});pz.querySelectorAll('img').forEach(i=>i.addEventListener('load',chk))}
  const c=document.getElementById('c'),x=c.getContext('2d');let drawn=false,down=false,last=null;
  const fit=()=>{const r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;x.scale(d,d);x.lineWidth=2.2;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#182d53';drawn=false};fit();
  const pt=e=>{const r=c.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
@@ -62,7 +65,7 @@ fetch(FN+'?t='+encodeURIComponent(t)).then(r=>r.json()).then(j=>{
  document.getElementById('clr').onclick=()=>{x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,c.width,c.height);fit()};
  const err=m=>document.getElementById('err').textContent=m;
  document.getElementById('s').onclick=async ev=>{const b=ev.target,name=document.getElementById('n').value.trim();
-  if(name.length<3)return err('Indiquez vos nom et prénom.');if(!drawn)return err('Signez dans le cadre.');if(!document.getElementById('a').checked)return err('Cochez la case « Bon pour accord ».');
+  if(!lu)return err('Faites défiler le devis et ses conditions générales jusqu’en bas avant de signer.');if(name.length<3)return err('Indiquez vos nom et prénom.');if(!drawn)return err('Signez dans le cadre.');if(!document.getElementById('a').checked)return err('Cochez la case « Bon pour accord ».');
   err('');b.disabled=true;b.textContent='Enregistrement…';
   try{const r=await fetch(FN,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({t,name,accept:true,png:c.toDataURL('image/png')})});const k=await r.json();
    if(!r.ok||!k.ok)throw new Error(k.error||'Erreur');
